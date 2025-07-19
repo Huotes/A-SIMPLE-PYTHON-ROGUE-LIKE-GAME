@@ -1,25 +1,41 @@
 import pgzrun
 from player import Player
 from enemy import Enemy
+from map_loader import Map
+from config import WIDTH, HEIGHT, TILE_SIZE
+
 
 enemies = []
 enemy_spawn_timer = 0
 ENEMY_SPAWN_INTERVAL = 2.0  # segundos
 
-WIDTH = 800
-HEIGHT = 600
+game_map = Map()
+game_map.load()
 
-player = Player((WIDTH // 2, HEIGHT // 2))
+map_pixel_width = game_map.map_width * TILE_SIZE
+map_pixel_height = game_map.map_height * TILE_SIZE
+
+# Calcular offset para centralizar o mapa na tela
+offset_x = (WIDTH - map_pixel_width) // 2
+offset_y = (HEIGHT - map_pixel_height) // 2
+
+# Posição inicial do player no centro do mapa
+player_start_x = offset_x + map_pixel_width // 2
+player_start_y = offset_y + map_pixel_height // 2
+
+player = Player((player_start_x, player_start_y))
+
 mouse_pos = (0, 0)
 mouse_buttons = (False, False, False)
 
 
+
 def draw():
     screen.clear()
+    game_map.draw(WIDTH, HEIGHT)
     for enemy in enemies:
         enemy.draw()
     player.draw()
-
 
 
 def update(dt):
