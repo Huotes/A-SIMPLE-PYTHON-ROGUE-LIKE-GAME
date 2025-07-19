@@ -1,0 +1,11 @@
+# Venv
+venv/
+.venv/
+
+# Arquivos do Pygame Zero (se gerar algum temporário)
+*.pyo
+
+# Cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
