@@ -2,12 +2,14 @@ from pgzero.actor import Actor
 from pgzero.keyboard import keyboard
 from pygame import Rect
 from spells import Spell
-from config import *
-
+from config import PLAYER_SPEED
+import sounds
 
 class Player:
-    def __init__(self, pos):
+    def __init__(self, pos, sounds, area_rect):
         self.x, self.y = pos
+        self.sounds = sounds
+        self.area_rect = area_rect
         self.speed = PLAYER_SPEED
         self.frame = 0
         self.anim_timer = 0
@@ -17,6 +19,12 @@ class Player:
         self.can_shoot = (
             True  # controle simples para não disparar múltiplas vezes por clique
         )
+
+        self.max_hp = 6
+        self.hp = self.max_hp
+        self.invulnerable = False
+        self.invulnerable_timer = 0
+        self.visible = True  # controle para piscar
 
         self.idle_images_right = [Actor(f"wizzard_f_idle_anim_f{i}") for i in range(4)]
         self.idle_images_left = [
@@ -69,14 +77,47 @@ class Player:
             spell.update(dt)
         self.spells = [s for s in self.spells if not s.is_off_screen()]
 
+        # Invulnerabilidade (piscando)
+        if self.invulnerable:
+            self.invulnerable_timer -= dt
+            if self.invulnerable_timer <= 0:
+                self.invulnerable = False
+                self.visible = True
+            else:
+                # Piscar visibilidade a cada 0.1s
+                if int(self.invulnerable_timer * 10) % 2 == 0:
+                    self.visible = False
+                else:
+                    self.visible = True
+
+        half_width = 16
+        half_height = 16
+
+        min_x = self.area_rect.left + half_width
+        max_x = self.area_rect.right - half_width
+        min_y = self.area_rect.top + half_height
+        max_y = self.area_rect.bottom - half_height
+
+        self.x = max(min_x, min(self.x, max_x))
+        self.y = max(min_y, min(self.y, max_y))
+
     def cast_spell(self, target_pos):
         spell = Spell((self.x, self.y), target_pos)
         self.spells.append(spell)
+        self.sounds.light_spell.play()
+
+    def take_damage(self):
+        if not self.invulnerable:
+            self.hp -= 1
+            self.invulnerable = True
+            self.invulnerable_timer = 1.0  # 1 segundo de invulnerabilidade
+            self.sounds.retro_hurt.play()
 
     def draw(self):
-        sprite = self.current_images[self.frame]
-        sprite.pos = (self.x, self.y)
-        sprite.draw()
+        if self.visible:
+            sprite = self.current_images[self.frame]
+            sprite.pos = (self.x, self.y)
+            sprite.draw()
         for spell in self.spells:
             spell.draw()
 
